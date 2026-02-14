@@ -338,8 +338,8 @@ export default function MatchesPage() {
                     </div>
                   )}
                   {selectedMatch.my_reveal && selectedMatch.their_reveal && (
-                    <div className="flex gap-2">
-                      {selectedMatch.other_user.whatsapp_number && (
+                    <div className="flex gap-2 flex-wrap">
+                      {selectedMatch.other_user.whatsapp_number && selectedMatch.reveal_type && (selectedMatch.reveal_type === "whatsapp" || selectedMatch.reveal_type === "both") && (
                         <a
                           href={`https://wa.me/${selectedMatch.other_user.whatsapp_number.replace(/\D/g, '')}`}
                           target="_blank"
@@ -351,7 +351,7 @@ export default function MatchesPage() {
                           </Button>
                         </a>
                       )}
-                      {selectedMatch.other_user.room_number && (() => {
+                      {selectedMatch.other_user.room_number && selectedMatch.reveal_type && (selectedMatch.reveal_type === "room" || selectedMatch.reveal_type === "both") && (() => {
                         const { building, room } = parseRoomNumber(selectedMatch.other_user.room_number);
                         const displayText = building && room ? `${building} - ${room}` : selectedMatch.other_user.room_number;
                         return (
