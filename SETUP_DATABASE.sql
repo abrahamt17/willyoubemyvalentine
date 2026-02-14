@@ -97,14 +97,17 @@ CREATE INDEX IF NOT EXISTS idx_messages_match ON messages(match_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at);
 
 -- ============================================
--- PART 5: SET UP INVITE CODES
+-- PART 5: CLEAN UP AND SET UP INVITE CODES
 -- ============================================
 
--- Delete ALL existing invite codes to start fresh
--- This prevents duplicate key errors
+-- IMPORTANT: Delete users first (they reference invite_codes)
+-- This will cascade delete messages, matches, and requests
+DELETE FROM users;
+
+-- Now we can safely delete all invite codes
 DELETE FROM invite_codes;
 
--- Insert all invite codes
+-- Insert all invite codes fresh
 INSERT INTO invite_codes (code, used) 
 VALUES 
   ('besideCHAT123', false),
