@@ -176,6 +176,20 @@ export default function HomePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    
+    // Check if user has recent accounts before creating a new one
+    const stored = localStorage.getItem("recent_accounts");
+    if (stored) {
+      const userIds = JSON.parse(stored);
+      if (Array.isArray(userIds) && userIds.length > 0) {
+        // User has recent accounts - ask them to use existing account instead
+        setError(t.landing.useExistingAccount || "You have accounts in this browser. Please select one from above or use Quick Login to find your account.");
+        // Reload recent accounts to make sure they're visible
+        loadRecentAccounts();
+        return;
+      }
+    }
+    
     setLoading(true);
     try {
       const res = await fetch("/api/auth/invite", {
@@ -406,9 +420,16 @@ export default function HomePage() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
+          transition={{ delay: recentAccounts.length > 0 ? 0.35 : 0.3, duration: 0.6 }}
           className="w-full max-w-md mt-12"
         >
+          {recentAccounts.length > 0 && (
+            <div className="mb-4 text-center">
+              <p className="text-sm text-muted-foreground mb-3">
+                {t.landing.orCreateNew || "Or create a new account:"}
+              </p>
+            </div>
+          )}
           <div className="flex gap-2 mb-4 justify-center">
             <Button
               type="button"
