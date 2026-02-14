@@ -59,7 +59,8 @@ CREATE TABLE IF NOT EXISTS messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   match_id uuid NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
   sender_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  content text NOT NULL,
+  content text,
+  image_url text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
