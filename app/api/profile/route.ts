@@ -106,15 +106,12 @@ export async function POST(request: Request) {
         .eq("room_number", roomNumber)
         .neq("id", sessionUser.userId);
 
+      // If there's a database error, just log it and continue (don't block the user)
       if (countError) {
         console.error("Error checking room number:", countError);
-        return NextResponse.json(
-          { error: "Could not verify room number." },
-          { status: 500 }
-        );
-      }
-
-      if (count && count >= 2) {
+        // Continue anyway - allow the room number to be set
+      } else if (count && count >= 2) {
+        // Only block if we successfully checked and found 2+ people
         return NextResponse.json(
           { error: "This room is already occupied by 2 people. Rooms are shared by maximum 2 people." },
           { status: 400 }

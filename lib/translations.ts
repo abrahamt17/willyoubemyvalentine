@@ -6,8 +6,8 @@ export const translations = {
     landing: {
       title: "Meet a Stranger",
       subtitle: "In Your Campus",
-      description: "Secure your Valentine with a blind date night out.\nConnect with someone new on campus. Anonymous until you both match.",
-      tagline: "Blind Valentine Date Night Out",
+      description: "Secure your Valentine with a blind chat maybe meetup.\nConnect with someone new on campus. Anonymous until you both match.",
+      tagline: "Blind Valentine Chat Maybe Meetup",
       builtFor: "Built for innamorati collegio students",
       private: "Campus Only",
       inviteOnly: "Invite-only",
@@ -20,7 +20,7 @@ export const translations = {
       success: "Success!",
       welcome: "Welcome! Redirecting...",
       learnMore: "Learn more",
-      footer: "Built for campus residents. Connect, chat, and plan your Valentine chat and night out(maybe lol).",
+      footer: "Built for campus residents. Connect, chat, and plan your Valentine blind chat maybe meetup.",
       agreement: "By joining, you agree to be kind, keep things private, and respect boundaries.",
     },
     // Features
@@ -157,8 +157,8 @@ export const translations = {
     landing: {
       title: "Incontra uno Sconosciuto",
       subtitle: "Nel Tuo Campus",
-      description: "Assicura il tuo San Valentino con un appuntamento al buio.\nConnettiti con qualcuno di nuovo nel campus. Anonimo fino a quando non vi abbinate.",
-      tagline: "Appuntamento al Buio per San Valentino",
+      description: "Assicura il tuo San Valentino con una chat al buio forse un incontro.\nConnettiti con qualcuno di nuovo nel campus. Anonimo fino a quando non vi abbinate.",
+      tagline: "Chat al Buio per San Valentino Forse un Incontro",
       builtFor: "Creato per gli studenti innamorati del collegio",
       private: "Solo Campus",
       inviteOnly: "Solo su invito",
@@ -171,7 +171,7 @@ export const translations = {
       success: "Successo!",
       welcome: "Benvenuto! Reindirizzamento...",
       learnMore: "Scopri di più",
-      footer: "Costruito per i residenti del campus. Connettiti, chatta e pianifica la tua serata di San Valentino.",
+      footer: "Costruito per i residenti del campus. Connettiti, chatta e pianifica la tua chat al buio per San Valentino forse un incontro.",
       agreement: "Unendoti, accetti di essere gentile, mantenere le cose private e rispettare i confini.",
     },
     // Features
