@@ -122,8 +122,8 @@ VALUES
 -- Verify all codes were added
 SELECT 
   code, 
-  used, 
-  created_at 
+  used,
+  id
 FROM invite_codes 
 ORDER BY code;
 
