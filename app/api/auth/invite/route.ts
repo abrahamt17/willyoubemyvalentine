@@ -30,11 +30,12 @@ export async function POST(request: Request) {
 
     const supabase = supabaseServer();
 
-    // Check if invite code exists (but don't check if it's "used" - codes can be reused!)
+    // Check if invite code exists (case-insensitive, but don't check if it's "used" - codes can be reused!)
+    // Use ilike for case-insensitive matching since sanitizeInviteCode converts to uppercase
     const { data: invite, error: inviteError } = await supabase
       .from("invite_codes")
       .select("*")
-      .eq("code", code)
+      .ilike("code", code)
       .single<InviteCode>();
 
     if (inviteError || !invite) {
