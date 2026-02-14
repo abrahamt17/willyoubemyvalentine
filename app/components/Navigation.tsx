@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -9,12 +10,37 @@ import { useLanguage } from "../contexts/LanguageContext";
 export default function Navigation() {
   const pathname = usePathname();
   const { t } = useLanguage();
+  const [notifications, setNotifications] = useState({
+    pendingRequests: 0,
+    unreadMessages: 0,
+    newMatches: 0
+  });
+
+  useEffect(() => {
+    // Fetch notifications
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch("/api/notifications");
+        if (res.ok) {
+          const data = await res.json();
+          setNotifications(data);
+        }
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+
+    fetchNotifications();
+    // Refresh notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const navItems = [
-    { href: "/dashboard", label: t.nav.browse, icon: Heart },
-    { href: "/requests", label: t.nav.requests, icon: Mail },
-    { href: "/matches", label: t.nav.matches, icon: Users },
-    { href: "/profile", label: t.nav.profile, icon: User }
+    { href: "/dashboard", label: t.nav.browse, icon: Heart, count: 0 },
+    { href: "/requests", label: t.nav.requests, icon: Mail, count: notifications.pendingRequests },
+    { href: "/matches", label: t.nav.matches, icon: Users, count: notifications.unreadMessages + notifications.newMatches },
+    { href: "/profile", label: t.nav.profile, icon: User, count: 0 }
   ];
 
   return (
@@ -62,8 +88,18 @@ export default function Navigation() {
                     repeat: isActive ? Infinity : 0,
                     ease: "easeInOut",
                   }}
+                  className="relative"
                 >
                   <Icon className={`w-5 h-5 ${isActive ? "fill-primary" : ""}`} />
+                  {item.count > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-destructive rounded-full"
+                    >
+                      {item.count > 99 ? "99+" : item.count}
+                    </motion.span>
+                  )}
                 </motion.div>
                 <span className="font-semibold">{item.label}</span>
                 {isActive && (

@@ -29,6 +29,7 @@ type Match = {
       };
   my_reveal: boolean;
   their_reveal: boolean;
+  reveal_type?: string;
   created_at: string;
 };
 

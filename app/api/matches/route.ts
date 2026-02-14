@@ -27,6 +27,8 @@ export async function GET() {
         user_b,
         reveal_a,
         reveal_b,
+        reveal_type_a,
+        reveal_type_b,
         created_at,
             user_a_data:users!matches_user_a_fkey(id, anonymous_name, display_name, bio, avatar_url, whatsapp_number, room_number, hobbies),
             user_b_data:users!matches_user_b_fkey(id, anonymous_name, display_name, bio, avatar_url, whatsapp_number, room_number, hobbies)
