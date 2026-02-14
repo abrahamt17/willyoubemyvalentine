@@ -2,6 +2,8 @@
 
 A private, invite-only anonymous matching app for Valentine's Day events. Built with Next.js, TypeScript, and Supabase.
 
+<!-- Deployment trigger -->
+
 ## Features
 
 - ✅ **Invite-only access** - One shared code for your class
