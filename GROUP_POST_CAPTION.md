@@ -36,7 +36,7 @@ A simple app where you can anonymously browse classmates, send requests, and if 
 - ✅ Fun way to meet new people!
 
 💬 **Ready to try it?**
-Just use the invite code: **INNAMORATI**
+Just use the invite code: **innamorari1**
 
 Let's make this Valentine's Day special! 💕
 
@@ -78,7 +78,7 @@ Un'app semplice dove puoi sfogliare anonimamente i tuoi compagni, inviare richie
 - ✅ Modo divertente per conoscere nuove persone!
 
 💬 **Pronto a provarlo?**
-Usa semplicemente il codice invito: **INNAMORATI**
+Usa semplicemente il codice invito: **innamorari1**
 
 Rendiamo questo San Valentino speciale! 💕
 
@@ -98,7 +98,7 @@ A fun, private way to connect on campus!
 💬 **Private Chat** - Get to know your matches safely
 🎯 **Campus Only** - Just for our community
 
-Enter code: **INNAMORATI**
+Enter code: **innamorari1**
 
 Let's make Valentine's Day special! 💕
 

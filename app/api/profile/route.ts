@@ -98,6 +98,31 @@ export async function POST(request: Request) {
     // Sanitize room number
     const roomNumber = typeof body.room_number === "string" ? body.room_number.trim().slice(0, 20) : null;
 
+    // Validate room number: only 2 people can share the same room
+    if (roomNumber) {
+      const { data: existingUsers, error: countError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("room_number", roomNumber)
+        .neq("id", sessionUser.userId); // Exclude current user
+
+      if (countError) {
+        console.error("Error checking room number:", countError);
+        return NextResponse.json(
+          { error: "Could not validate room number." },
+          { status: 500 }
+        );
+      }
+
+      // If 2 or more people already have this room, reject
+      if (existingUsers && existingUsers.length >= 2) {
+        return NextResponse.json(
+          { error: "This room number is already taken by 2 people. Rooms are shared by 2 people maximum." },
+          { status: 400 }
+        );
+      }
+    }
+
     // Validate and sanitize hobbies
     let hobbiesArray: string[] = [];
     if (Array.isArray(body.hobbies)) {
