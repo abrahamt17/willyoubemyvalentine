@@ -157,6 +157,7 @@ export const translations = {
       subtitle: "Nel Tuo Campus",
       description: "Assicura il tuo San Valentino con un appuntamento al buio.\nConnettiti con qualcuno di nuovo nel campus. Anonimo fino a quando non vi abbinate.",
       tagline: "Appuntamento al Buio per San Valentino",
+      builtFor: "Creato per gli studenti innamorati del collegio",
       private: "Solo Campus",
       inviteOnly: "Solo su invito",
       anonymous: "Anonimo",
