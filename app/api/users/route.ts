@@ -17,13 +17,29 @@ export async function GET() {
 
     const supabase = supabaseServer();
 
-    // Get all users except current user, who have completed onboarding (have anonymous_name)
-    const { data: users, error } = await supabase
+    // Get current user's gender to filter matches
+    const { data: currentUser } = await supabase
+      .from("users")
+      .select("gender")
+      .eq("id", sessionUser.userId)
+      .single();
+
+    // Build query - filter by opposite gender
+    let query = supabase
       .from("users")
       .select("id, anonymous_name, bio, gender, hobbies, created_at")
       .neq("id", sessionUser.userId)
-      .neq("anonymous_name", "")
-      .order("created_at", { ascending: false });
+      .neq("anonymous_name", "");
+
+    // Filter by opposite gender: Male sees only Female, Female sees only Male
+    if (currentUser?.gender === "Male") {
+      query = query.eq("gender", "Female");
+    } else if (currentUser?.gender === "Female") {
+      query = query.eq("gender", "Male");
+    }
+    // If gender is not set, show all (shouldn't happen after onboarding)
+
+    const { data: users, error } = await query.order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error fetching users:", error);

@@ -1,28 +1,28 @@
 /**
- * Popular hobbies used in dating apps
+ * Mature and flirty hobbies for dating apps
  */
 
 export const hobbies = [
-  "Travel",
+  "Wine Tasting",
   "Photography",
-  "Music",
+  "Live Music",
   "Reading",
-  "Cooking",
-  "Fitness",
-  "Gaming",
-  "Movies",
-  "Art",
+  "Cooking Together",
+  "Gym & Fitness",
+  "Nightlife",
+  "Cinema",
+  "Art & Culture",
   "Dancing",
-  "Sports",
-  "Hiking",
-  "Yoga",
-  "Writing",
-  "Technology",
-  "Fashion",
-  "Food",
-  "Animals",
-  "Volunteering",
-  "Learning Languages"
+  "Adventure Sports",
+  "Hiking & Nature",
+  "Yoga & Wellness",
+  "Writing & Poetry",
+  "Tech & Innovation",
+  "Fashion & Style",
+  "Foodie",
+  "Pet Lover",
+  "Travel",
+  "Philosophy & Deep Talks"
 ] as const;
 
 export type Hobby = typeof hobbies[number];
