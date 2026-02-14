@@ -32,28 +32,71 @@ export default function OnboardingPage() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => {
-        if (!res.ok) {
+    // First check if user has recent accounts (in case session was lost after redeployment)
+    const stored = localStorage.getItem("recent_accounts");
+    if (stored) {
+      const userIds = JSON.parse(stored);
+      if (Array.isArray(userIds) && userIds.length > 0) {
+        // Check if any of these accounts have completed onboarding
+        fetch(`/api/auth/recent-accounts?user_ids=${userIds.join(",")}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.accounts && data.accounts.length > 0) {
+              // Found completed accounts - auto-login to most recent
+              const mostRecent = data.accounts[0];
+              fetch("/api/auth/accounts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_id: mostRecent.id })
+              })
+                .then((loginRes) => loginRes.json())
+                .then((loginData) => {
+                  if (loginData.ok) {
+                    // Successfully logged in - redirect to dashboard
+                    router.replace("/dashboard");
+                    return;
+                  }
+                  // If login fails, continue with normal flow
+                  checkSession();
+                })
+                .catch(() => checkSession());
+            } else {
+              // No valid accounts, continue with normal flow
+              checkSession();
+            }
+          })
+          .catch(() => checkSession());
+        return;
+      }
+    }
+    
+    // No recent accounts, check session normally
+    checkSession();
+    
+    function checkSession() {
+      fetch("/api/auth/me")
+        .then((res) => {
+          if (!res.ok) {
+            router.push("/");
+            return null;
+          }
+          return res.json();
+        })
+        .then((data) => {
+          if (!data) return;
+          
+          // If user has completed onboarding, redirect to dashboard
+          if (data.hasCompletedOnboarding) {
+            router.push("/dashboard");
+          } else {
+            // User is logged in but hasn't completed onboarding - show form
+            setChecking(false);
+          }
+        })
+        .catch(() => {
           router.push("/");
-          return null;
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (!data) return;
-        
-        // If user has completed onboarding, redirect to dashboard
-        if (data.hasCompletedOnboarding) {
-          router.push("/dashboard");
-        } else {
-          // User is logged in but hasn't completed onboarding - show form
-          setChecking(false);
-        }
-      })
-      .catch(() => {
-        router.push("/");
-      });
+        });
+    }
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {

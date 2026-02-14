@@ -188,7 +188,7 @@ export default function HomePage() {
     e.preventDefault();
     setError(null);
     
-    // Check if user has recent accounts - if so, auto-login to most recent
+    // ALWAYS check recent accounts first - if user has accounts, auto-login instead of creating new
     const stored = localStorage.getItem("recent_accounts");
     if (stored) {
       const userIds = JSON.parse(stored);
@@ -204,24 +204,31 @@ export default function HomePage() {
           if (res.ok) {
             const data = await res.json();
             if (data.accounts && data.accounts.length > 0) {
-              // Account exists - log them in automatically
+              // Account exists - log them in automatically (don't create new account!)
               await handleAccountLogin(mostRecentUserId);
               return;
             }
           }
           
-          // If account doesn't exist, remove it and try next one or create new
+          // If account doesn't exist, remove it and try next one
           const validIds = userIds.filter((id: string) => id !== mostRecentUserId);
           if (validIds.length > 0) {
             localStorage.setItem("recent_accounts", JSON.stringify(validIds));
             // Try next account
             const nextUserId = validIds[0];
-            await handleAccountLogin(nextUserId);
-            return;
-          } else {
-            // No valid accounts, clear localStorage and proceed with new registration
-            localStorage.removeItem("recent_accounts");
+            const nextRes = await fetch(`/api/auth/recent-accounts?user_ids=${nextUserId}`);
+            if (nextRes.ok) {
+              const nextData = await nextRes.json();
+              if (nextData.accounts && nextData.accounts.length > 0) {
+                await handleAccountLogin(nextUserId);
+                return;
+              }
+            }
           }
+          
+          // No valid accounts found - clear localStorage
+          localStorage.removeItem("recent_accounts");
+          // Continue to create new account below
         } catch (error) {
           console.error("Error auto-logging in:", error);
           // If auto-login fails, proceed with new registration
@@ -231,7 +238,7 @@ export default function HomePage() {
       }
     }
     
-    // No recent accounts - proceed with new registration
+    // No recent accounts - proceed with new registration (first-time user)
     setLoading(true);
     try {
       const res = await fetch("/api/auth/invite", {
