@@ -105,7 +105,16 @@ export default function OnboardingPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? t.common.error);
+        const errorMessage = data.error ?? t.common.error;
+        
+        // Check if it's a room number limit error
+        if (errorMessage.includes("room") && (errorMessage.includes("2") || errorMessage.includes("occupied"))) {
+          setError(t.onboarding.roomNumberTaken);
+        } else {
+          setError(errorMessage);
+        }
+        
+        setLoading(false);
         return;
       }
 

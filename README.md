@@ -52,10 +52,10 @@ In Supabase SQL Editor, run:
 
 ```sql
 insert into invite_codes (code, used)
-values ('innamorari1', false);
+values ('innamorati1', false);
 ```
 
-The invite code is **innamorari1** - share this with your class!
+The invite code is **innamorati1** - share this with your class!
 
 ### 6. Run the App
 

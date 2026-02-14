@@ -132,10 +132,10 @@ After adding environment variables:
 In Supabase SQL Editor, run:
 
 ```sql
-INSERT INTO invite_codes (code) VALUES ('innamorari1');
+INSERT INTO invite_codes (code) VALUES ('innamorati1');
 ```
 
-The invite code is **innamorari1** - use this exact code!
+The invite code is **innamorati1** - use this exact code!
 
 ---
 

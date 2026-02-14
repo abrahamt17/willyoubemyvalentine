@@ -98,7 +98,14 @@ export default function ProfilePage() {
         loadProfile();
       } else {
         const data = await res.json();
-        alert(data.error || `${t.common.couldNot} update profile.`);
+        const errorMessage = data.error || `${t.common.couldNot} update profile.`;
+        
+        // Check if it's a room number limit error
+        if (errorMessage.includes("room") && (errorMessage.includes("2") || errorMessage.includes("occupied"))) {
+          alert(t.onboarding.roomNumberTaken);
+        } else {
+          alert(errorMessage);
+        }
       }
     } catch (error) {
       alert(t.common.networkError);
