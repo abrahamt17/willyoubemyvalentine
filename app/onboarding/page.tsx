@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Sparkles, User, FileText, Loader2, ArrowRight, MessageCircle, Home } from "lucide-react";
+import { Sparkles, User, FileText, Loader2, ArrowRight, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLanguage } from "../contexts/LanguageContext";
-import { buildings, rooms, formatRoomNumber, type Building } from "@/lib/rooms";
 import { hobbies, type Hobby } from "@/lib/hobbies";
 
 export default function OnboardingPage() {
@@ -27,8 +26,6 @@ export default function OnboardingPage() {
   const [bio, setBio] = useState("");
   const [gender, setGender] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
-  const [selectedBuilding, setSelectedBuilding] = useState<"ITACA" | "PADIGLIONE C" | "PADIGLIONE D" | "">("");
-  const [selectedRoom, setSelectedRoom] = useState("");
   const [selectedHobbies, setSelectedHobbies] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,12 +73,6 @@ export default function OnboardingPage() {
       return;
     }
 
-    if (!selectedBuilding || !selectedRoom.trim()) {
-      setError(t.onboarding.roomNumberRequired);
-      setLoading(false);
-      return;
-    }
-
     if (selectedHobbies.length < 3) {
       setError(t.onboarding.hobbiesRequired);
       setLoading(false);
@@ -97,7 +88,6 @@ export default function OnboardingPage() {
           bio: bio || null,
           gender: gender,
           whatsapp_number: whatsapp.trim(),
-          room_number: selectedBuilding && selectedRoom ? formatRoomNumber(selectedBuilding as Building, selectedRoom) : null,
           hobbies: selectedHobbies
         })
       });
@@ -106,19 +96,14 @@ export default function OnboardingPage() {
 
       if (!res.ok) {
         const errorMessage = data.error ?? t.common.error;
-        
-        // Check if it's a room number limit error
-        if (errorMessage.includes("room") && (errorMessage.includes("2") || errorMessage.includes("occupied"))) {
-          setError(t.onboarding.roomNumberTaken);
-        } else {
-          setError(errorMessage);
-        }
-        
+        setError(errorMessage);
         setLoading(false);
         return;
       }
 
-      router.push("/dashboard");
+      // Success! Redirect to dashboard
+      // Use replace to prevent going back to onboarding
+      router.replace("/dashboard");
     } catch {
       setError(t.common.networkError);
     } finally {
@@ -243,62 +228,6 @@ export default function OnboardingPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="building" className="flex items-center gap-2">
-                  <Home className="w-4 h-4" />
-                  {t.onboarding.building} *
-                </Label>
-                <Select 
-                  value={selectedBuilding} 
-                  onValueChange={(value) => {
-                    setSelectedBuilding(value as Building | "");
-                    setSelectedRoom(""); // Reset room when building changes
-                  }}
-                  disabled={loading}
-                  required
-                >
-                  <SelectTrigger id="building" className="h-11">
-                    <SelectValue placeholder={t.onboarding.buildingPlaceholder} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {buildings.map((building) => (
-                      <SelectItem key={building} value={building}>
-                        {building}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedBuilding && (
-                <div className="space-y-2">
-                  <Label htmlFor="room" className="flex items-center gap-2">
-                    <Home className="w-4 h-4" />
-                    {t.onboarding.roomNumber} *
-                  </Label>
-                  <Select 
-                    value={selectedRoom} 
-                    onValueChange={setSelectedRoom}
-                    disabled={loading}
-                    required
-                  >
-                    <SelectTrigger id="room" className="h-11">
-                      <SelectValue placeholder={t.onboarding.roomNumberPlaceholder} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {rooms[selectedBuilding as Building].map((room) => (
-                        <SelectItem key={room} value={room}>
-                          {room}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    {t.onboarding.roomNumberDesc}
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   {t.onboarding.hobbies} *
@@ -351,7 +280,7 @@ export default function OnboardingPage() {
 
                <Button
                  type="submit"
-                    disabled={loading || !anonymousName.trim() || !whatsapp.trim() || !gender.trim() || !selectedBuilding || !selectedRoom.trim() || selectedHobbies.length < 3}
+                    disabled={loading || !anonymousName.trim() || !whatsapp.trim() || !gender.trim() || selectedHobbies.length < 3}
                  size="lg"
                  className="w-full"
                >

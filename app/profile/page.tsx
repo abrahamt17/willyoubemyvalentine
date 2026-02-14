@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { User, Save, LogOut, Loader2, UserCircle, FileText, Sparkles, MessageCircle } from "lucide-react";
+import { User, Save, LogOut, Loader2, UserCircle, FileText, Sparkles, MessageCircle, Home } from "lucide-react";
 import Navigation from "../components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useLanguage } from "../contexts/LanguageContext";
+import { buildings, rooms, formatRoomNumber, parseRoomNumber, type Building } from "@/lib/rooms";
 
 type User = {
   id: string;
@@ -36,6 +44,8 @@ export default function ProfilePage() {
     gender: "",
     whatsapp_number: ""
   });
+  const [selectedBuilding, setSelectedBuilding] = useState<"ITACA" | "PADIGLIONE C" | "PADIGLIONE D" | "">("");
+  const [selectedRoom, setSelectedRoom] = useState("");
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -74,6 +84,13 @@ export default function ProfilePage() {
           gender: data.user.gender || "",
           whatsapp_number: data.user.whatsapp_number || ""
         });
+        
+        // Parse room number if it exists
+        if (data.user.room_number) {
+          const { building, room } = parseRoomNumber(data.user.room_number);
+          setSelectedBuilding(building || "");
+          setSelectedRoom(room || "");
+        }
       }
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -90,7 +107,10 @@ export default function ProfilePage() {
       const res = await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          room_number: selectedBuilding && selectedRoom ? formatRoomNumber(selectedBuilding as Building, selectedRoom) : null
+        })
       });
 
       if (res.ok) {
@@ -272,6 +292,62 @@ export default function ProfilePage() {
                       }
                     />
                   </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <Label htmlFor="building" className="flex items-center gap-2">
+                      <Home className="w-4 h-4" />
+                      {t.onboarding.building}
+                    </Label>
+                    <Select 
+                      value={selectedBuilding} 
+                      onValueChange={(value) => {
+                        setSelectedBuilding(value as Building | "");
+                        setSelectedRoom(""); // Reset room when building changes
+                      }}
+                      disabled={saving}
+                    >
+                      <SelectTrigger id="building" className="h-11">
+                        <SelectValue placeholder={t.onboarding.buildingPlaceholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {buildings.map((building) => (
+                          <SelectItem key={building} value={building}>
+                            {building}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {selectedBuilding && (
+                    <div className="space-y-2">
+                      <Label htmlFor="room" className="flex items-center gap-2">
+                        <Home className="w-4 h-4" />
+                        {t.onboarding.roomNumber}
+                      </Label>
+                      <Select 
+                        value={selectedRoom} 
+                        onValueChange={setSelectedRoom}
+                        disabled={saving}
+                      >
+                        <SelectTrigger id="room" className="h-11">
+                          <SelectValue placeholder={t.onboarding.roomNumberPlaceholder} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {rooms[selectedBuilding as Building].map((room) => (
+                            <SelectItem key={room} value={room}>
+                              {room}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        {t.onboarding.roomNumberDesc}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="flex gap-3 pt-4">
                     <Button
