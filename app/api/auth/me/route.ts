@@ -14,18 +14,30 @@ export async function GET() {
       return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
     }
 
-    // Check if user has completed onboarding (has anonymous_name)
+    // Check if user has completed onboarding (has anonymous_name and gender)
     const supabase = supabaseServer();
-    const { data: user } = await supabase
+    const { data: user, error: userError } = await supabase
       .from("users")
-      .select("anonymous_name")
+      .select("anonymous_name, gender, whatsapp_number")
       .eq("id", sessionUser.userId)
       .single();
+
+    // If user doesn't exist or query failed, they haven't completed onboarding
+    if (userError || !user) {
+      return NextResponse.json({ 
+        userId: sessionUser.userId,
+        user: null,
+        hasCompletedOnboarding: false
+      });
+    }
+
+    // User has completed onboarding if they have anonymous_name, gender, and whatsapp_number
+    const hasCompleted = !!(user.anonymous_name && user.anonymous_name.trim() && user.gender && user.whatsapp_number);
 
     return NextResponse.json({ 
       userId: sessionUser.userId,
       user: user,
-      hasCompletedOnboarding: !!user?.anonymous_name
+      hasCompletedOnboarding: hasCompleted
     });
   } catch (error) {
     console.error(error);

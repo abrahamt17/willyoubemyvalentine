@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Heart, Lock, Sparkles, ArrowRight, Shield, Users, Eye, Languages, Globe } from "lucide-react";
+import { Heart, Lock, Sparkles, ArrowRight, Shield, Users, Eye, Languages, Globe, LogIn, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useLanguage } from "./contexts/LanguageContext";
 import Background3D from "./components/Background3D";
 
@@ -26,6 +33,12 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showQuickLogin, setShowQuickLogin] = useState(false);
+  const [loginName, setLoginName] = useState("");
+  const [loginGender, setLoginGender] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [searchingAccounts, setSearchingAccounts] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -38,14 +51,73 @@ export default function HomePage() {
       })
       .then((data) => {
         if (data?.hasCompletedOnboarding) {
-          router.push("/dashboard");
+          // User is logged in and has completed onboarding - stay on page or redirect
+          // Don't auto-redirect, let them see the homepage
         } else if (data?.userId) {
           // User is logged in but hasn't completed onboarding
           router.push("/onboarding");
         }
+        // If no data, user is not logged in - show login/register options
       })
       .catch(() => {});
   }, [router]);
+
+  const handleQuickLoginSearch = async () => {
+    if (!loginName.trim() || !loginGender) {
+      setError("Please enter your nickname and select gender");
+      return;
+    }
+
+    setSearchingAccounts(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/auth/accounts?anonymous_name=${encodeURIComponent(loginName.trim())}&gender=${encodeURIComponent(loginGender)}`);
+      const data = await res.json();
+      
+      if (res.ok && data.accounts && data.accounts.length > 0) {
+        setAccounts(data.accounts);
+      } else {
+        setError("No accounts found with that nickname and gender");
+        setAccounts([]);
+      }
+    } catch {
+      setError("Could not search for accounts");
+    } finally {
+      setSearchingAccounts(false);
+    }
+  };
+
+  const handleAccountLogin = async (userId: string) => {
+    setLoginLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId })
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        // Check if user has completed onboarding
+        const meRes = await fetch("/api/auth/me");
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          if (meData.hasCompletedOnboarding) {
+            router.replace("/dashboard");
+          } else {
+            router.replace("/onboarding");
+          }
+        }
+      } else {
+        setError(data.error || "Could not log in");
+      }
+    } catch {
+      setError("Network error");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,22 +279,144 @@ export default function HomePage() {
           </div>
         </motion.div>
 
-        {/* Invite Form Card */}
+        {/* Quick Login / Register Toggle */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
           className="w-full max-w-md mt-12"
         >
-          <Card className="border-primary/20 bg-card/50 backdrop-blur-xl shadow-2xl">
-            <CardHeader className="space-y-2">
-              <CardTitle className="text-2xl text-center">{t.landing.enterCode}</CardTitle>
-              <CardDescription className="text-center">
-                {t.landing.codeDescription}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex gap-2 mb-4 justify-center">
+            <Button
+              type="button"
+              variant={!showQuickLogin ? "default" : "outline"}
+              onClick={() => {
+                setShowQuickLogin(false);
+                setError(null);
+                setAccounts([]);
+              }}
+              size="sm"
+            >
+              {t.landing.newAccount || "New Account"}
+            </Button>
+            <Button
+              type="button"
+              variant={showQuickLogin ? "default" : "outline"}
+              onClick={() => {
+                setShowQuickLogin(true);
+                setError(null);
+                setCode("");
+              }}
+              size="sm"
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              {t.landing.quickLogin || "Quick Login"}
+            </Button>
+          </div>
+
+          {showQuickLogin ? (
+            /* Quick Login Card */
+            <Card className="border-primary/20 bg-card/50 backdrop-blur-xl shadow-2xl">
+              <CardHeader className="space-y-2">
+                <CardTitle className="text-2xl text-center flex items-center justify-center gap-2">
+                  <LogIn className="w-6 h-6" />
+                  {t.landing.quickLogin || "Quick Login"}
+                </CardTitle>
+                <CardDescription className="text-center">
+                  {t.landing.quickLoginDesc || "Enter your nickname and gender to find your account"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Input
+                      type="text"
+                      placeholder={t.landing.loginNamePlaceholder || "Your Nickname"}
+                      value={loginName}
+                      onChange={(e) => setLoginName(e.target.value)}
+                      disabled={loginLoading || searchingAccounts}
+                      className="h-12"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Select
+                      value={loginGender}
+                      onValueChange={setLoginGender}
+                      disabled={loginLoading || searchingAccounts}
+                    >
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder={t.landing.loginGenderPlaceholder || "Select Gender"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {error && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-sm text-destructive text-center"
+                    >
+                      {error}
+                    </motion.p>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={handleQuickLoginSearch}
+                    disabled={!loginName.trim() || !loginGender || searchingAccounts || loginLoading}
+                    size="lg"
+                    className="w-full"
+                  >
+                    {searchingAccounts ? (
+                      <>
+                        <Sparkles className="w-4 h-4 animate-spin mr-2" />
+                        {t.landing.searching || "Searching..."}
+                      </>
+                    ) : (
+                      <>
+                        <User className="w-4 h-4 mr-2" />
+                        {t.landing.findAccount || "Find My Account"}
+                      </>
+                    )}
+                  </Button>
+                  
+                  {accounts.length > 0 && (
+                    <div className="space-y-2 mt-4">
+                      <p className="text-sm text-muted-foreground text-center">
+                        {t.landing.selectAccount || "Select your account:"}
+                      </p>
+                      {accounts.map((account) => (
+                        <Button
+                          key={account.id}
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleAccountLogin(account.id)}
+                          disabled={loginLoading}
+                          className="w-full justify-start"
+                        >
+                          <User className="w-4 h-4 mr-2" />
+                          {account.anonymous_name} ({account.gender})
+                          {loginLoading && <Loader2 className="w-4 h-4 ml-auto animate-spin" />}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            /* Invite Form Card - New Account */
+            <Card className="border-primary/20 bg-card/50 backdrop-blur-xl shadow-2xl">
+              <CardHeader className="space-y-2">
+                <CardTitle className="text-2xl text-center">{t.landing.enterCode}</CardTitle>
+                <CardDescription className="text-center">
+                  {t.landing.codeDescription}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Input
@@ -307,6 +501,7 @@ export default function HomePage() {
               </form>
             </CardContent>
           </Card>
+          )}
         </motion.div>
       </section>
 
