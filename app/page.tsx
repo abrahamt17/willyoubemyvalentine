@@ -23,7 +23,7 @@ export default function HomePage() {
   const router = useRouter();
   const { t, language } = useLanguage();
   const [mounted, setMounted] = useState(false);
-  const [languageSelected, setLanguageSelected] = useState(false);
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,13 +31,6 @@ export default function HomePage() {
 
   useEffect(() => {
     setMounted(true);
-    // Check if language was already selected
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("language");
-      if (saved) {
-        setLanguageSelected(true);
-      }
-    }
     
     fetch("/api/auth/me")
       .then((res) => {
@@ -76,7 +69,8 @@ export default function HomePage() {
         if (data.alreadyLoggedIn) {
           router.push("/dashboard");
         } else {
-          router.push("/onboarding");
+          // Show language selector before onboarding
+          setShowLanguageSelector(true);
         }
       }, 800);
     } catch {
@@ -88,9 +82,9 @@ export default function HomePage() {
 
   if (!mounted) return null;
 
-  // Show language selector first if not selected
-  if (!languageSelected) {
-    return <LanguageSelector onSelect={() => setLanguageSelected(true)} />;
+  // Show language selector after successful invite code entry
+  if (showLanguageSelector) {
+    return <LanguageSelector onSelect={() => router.push("/onboarding")} />;
   }
 
   return (

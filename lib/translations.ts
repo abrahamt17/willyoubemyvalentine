@@ -8,6 +8,7 @@ export const translations = {
       subtitle: "In Your Campus",
       description: "Secure your Valentine with a blind date night out.\nConnect with someone new on campus. Anonymous until you both match.",
       tagline: "Blind Valentine Date Night Out",
+      builtFor: "Built for innamorati collegio students",
       private: "Campus Only",
       inviteOnly: "Invite-only",
       anonymous: "Anonymous",
