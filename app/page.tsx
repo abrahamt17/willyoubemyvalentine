@@ -146,6 +146,16 @@ export default function HomePage() {
             </motion.span>
           </h1>
 
+          {/* Built For */}
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.6 }}
+            className="text-base md:text-lg font-medium text-muted-foreground italic mb-2"
+          >
+            {t.landing.builtFor}
+          </motion.p>
+
           {/* Tagline */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
