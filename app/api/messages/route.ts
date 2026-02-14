@@ -81,10 +81,11 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({}));
     const matchId = body.match_id;
     const content = sanitizeMessage(body.content);
+    const imageUrl = typeof body.image_url === "string" ? body.image_url.trim() : null;
 
-    if (!matchId || !content) {
+    if (!matchId || (!content && !imageUrl)) {
       return NextResponse.json(
-        { error: "Match ID and message content required." },
+        { error: "Match ID and message content or image required." },
         { status: 400 }
       );
     }
@@ -111,7 +112,8 @@ export async function POST(request: Request) {
       .insert({
         match_id: matchId,
         sender_id: sessionUser.userId,
-        content
+        content: content || null,
+        image_url: imageUrl || null
       })
       .select("*")
       .single<Message>();

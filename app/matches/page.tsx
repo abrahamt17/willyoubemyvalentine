@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Heart, MessageSquare, Send, Loader2, Sparkles, Unlock, MessageCircle, Home } from "lucide-react";
+import { Heart, MessageSquare, Send, Loader2, Sparkles, Unlock, MessageCircle, Home, Image as ImageIcon, X } from "lucide-react";
 import Navigation from "../components/Navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ type Message = {
   id: string;
   sender_id: string;
   content: string;
+  image_url: string | null;
   created_at: string;
 };
 
@@ -50,6 +51,9 @@ export default function MatchesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [revealing, setRevealing] = useState<string | null>(null);
   const [showRevealOptions, setShowRevealOptions] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<{ id: string; anonymous_name: string; whatsapp_number: string | null; room_number: string | null } | null>(null);
@@ -133,22 +137,84 @@ export default function MatchesPage() {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image must be less than 5MB.");
+      return;
+    }
+
+    setSelectedImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+  };
+
   const sendMessage = async () => {
-    if (!selectedMatch || !messageInput.trim()) return;
+    if (!selectedMatch || (!messageInput.trim() && !selectedImage)) return;
 
     setSendingMessage(true);
+    setUploadingImage(true);
+
     try {
+      let imageUrl = null;
+
+      // Upload image if selected
+      if (selectedImage && selectedMatch) {
+        const formData = new FormData();
+        formData.append("file", selectedImage);
+        formData.append("match_id", selectedMatch.id);
+
+        const uploadRes = await fetch("/api/messages/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        if (!uploadRes.ok) {
+          const errorData = await uploadRes.json();
+          alert(errorData.error || "Could not upload image.");
+          setSendingMessage(false);
+          setUploadingImage(false);
+          return;
+        }
+
+        const uploadData = await uploadRes.json();
+        imageUrl = uploadData.image_url;
+      }
+
+      setUploadingImage(false);
+
+      // Send message with image
       const res = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           match_id: selectedMatch.id,
-          content: messageInput
+          content: messageInput.trim() || null,
+          image_url: imageUrl
         })
       });
 
       if (res.ok) {
         setMessageInput("");
+        setSelectedImage(null);
+        setImagePreview(null);
         loadMessages(selectedMatch.id);
       } else {
         alert(`${t.common.couldNot} send message.`);
@@ -157,6 +223,7 @@ export default function MatchesPage() {
       alert(t.common.networkError);
     } finally {
       setSendingMessage(false);
+      setUploadingImage(false);
     }
   };
 
@@ -430,7 +497,19 @@ export default function MatchesPage() {
                               : "bg-card/80 border border-border/50 text-foreground rounded-bl-md"
                           }`}
                         >
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
+                          {msg.image_url && (
+                            <div className="mb-2 rounded-lg overflow-hidden max-w-[250px]">
+                              <img 
+                                src={msg.image_url} 
+                                alt="Message image" 
+                                className="w-full h-auto object-cover"
+                                loading="lazy"
+                              />
+                            </div>
+                          )}
+                          {msg.content && (
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
+                          )}
                         </motion.div>
                         <p className={`mt-1 text-xs px-2 ${isMe ? "text-muted-foreground" : "text-muted-foreground"}`}>
                           {new Date(msg.created_at).toLocaleTimeString([], {
@@ -455,6 +534,24 @@ export default function MatchesPage() {
 
             {/* Message Input */}
             <div className="border-t border-border/50 p-4 bg-card/80 backdrop-blur-xl sticky bottom-0">
+              {imagePreview && (
+                <div className="mb-3 relative inline-block">
+                  <div className="relative rounded-lg overflow-hidden max-w-[200px]">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="w-full h-auto max-h-[200px] object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="absolute top-2 right-2 p-1 rounded-full bg-destructive/80 hover:bg-destructive text-white"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
               <motion.form 
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -465,12 +562,34 @@ export default function MatchesPage() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                  id="image-upload"
+                  disabled={sendingMessage || uploadingImage}
+                />
+                <label htmlFor="image-upload">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-12 w-12 rounded-full"
+                    disabled={sendingMessage || uploadingImage}
+                    asChild
+                  >
+                    <span>
+                      <ImageIcon className="w-5 h-5" />
+                    </span>
+                  </Button>
+                </label>
                 <Input
                   type="text"
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
                   placeholder={t.matches.messagePlaceholder}
-                  disabled={sendingMessage}
+                  disabled={sendingMessage || uploadingImage}
                   onKeyPress={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -482,11 +601,11 @@ export default function MatchesPage() {
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button
                     type="submit"
-                    disabled={!messageInput.trim() || sendingMessage}
+                    disabled={(!messageInput.trim() && !selectedImage) || sendingMessage || uploadingImage}
                     size="icon"
                     className="h-12 w-12 rounded-full"
                   >
-                    {sendingMessage ? (
+                    {(sendingMessage || uploadingImage) ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                       <Send className="w-5 h-5" />
