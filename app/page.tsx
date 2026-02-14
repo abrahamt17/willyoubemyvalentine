@@ -17,13 +17,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLanguage } from "./contexts/LanguageContext";
 import Background3D from "./components/Background3D";
-import LanguageSelector from "./components/LanguageSelector";
 
 export default function HomePage() {
   const router = useRouter();
-  const { t, language } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const [mounted, setMounted] = useState(false);
-  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,8 +67,8 @@ export default function HomePage() {
         if (data.alreadyLoggedIn) {
           router.push("/dashboard");
         } else {
-          // Show language selector before onboarding
-          setShowLanguageSelector(true);
+          // Go directly to onboarding (language already selected on homepage)
+          router.push("/onboarding");
         }
       }, 800);
     } catch {
@@ -82,13 +80,29 @@ export default function HomePage() {
 
   if (!mounted) return null;
 
-  // Show language selector after successful invite code entry
-  if (showLanguageSelector) {
-    return <LanguageSelector onSelect={() => router.push("/onboarding")} />;
-  }
-
   return (
     <div className="relative flex min-h-screen flex-col">
+      {/* Language Toggle - Top Right */}
+      <div className="fixed top-4 right-4 z-50">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Globe className="w-4 h-4" />
+              <span>{language === "it" ? "🇮🇹 IT" : "🇬🇧 EN"}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setLanguage("it")}>
+              <span className="mr-2">🇮🇹</span>
+              Italiano
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setLanguage("en")}>
+              <span className="mr-2">🇬🇧</span>
+              English
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       {/* Hero Section */}
       <section className="relative flex min-h-[90vh] flex-col items-center justify-center px-4 py-20">
@@ -210,17 +224,43 @@ export default function HomePage() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Input
-                    type="text"
-                    placeholder={t.landing.codePlaceholder}
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    disabled={loading || success}
-                    className="text-center text-lg font-medium tracking-wider h-12"
-                    autoCapitalize="characters"
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="text"
+                      placeholder={t.landing.codePlaceholder}
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.toUpperCase())}
+                      disabled={loading || success}
+                      className="text-center text-lg font-medium tracking-wider h-12 flex-1"
+                      autoCapitalize="characters"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                    {/* Language Toggle - Next to Input */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          type="button"
+                          variant="outline" 
+                          size="icon"
+                          className="h-12 w-12 shrink-0"
+                          disabled={loading || success}
+                        >
+                          <Globe className="w-5 h-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setLanguage("it")}>
+                          <span className="mr-2">🇮🇹</span>
+                          Italiano
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setLanguage("en")}>
+                          <span className="mr-2">🇬🇧</span>
+                          English
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                   {error && (
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
