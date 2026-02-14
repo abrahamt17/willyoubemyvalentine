@@ -1,15 +1,20 @@
--- Add the invite code to your Supabase database
+-- Add invite codes to your Supabase database
 -- Run this in Supabase SQL Editor
 
--- First, check if the code already exists (case-insensitive)
--- Delete any old variations if they exist
-DELETE FROM invite_codes WHERE LOWER(code) = LOWER('innamorati1');
-
--- Insert the new code (you can use lowercase, it will work case-insensitively)
+-- Add all invite codes (case-insensitive matching is now supported)
 INSERT INTO invite_codes (code, used) 
-VALUES ('innamorati1', false)
-ON CONFLICT (code) DO NOTHING;
+VALUES 
+  ('besideCHAT123', false),
+  ('valentine1', false),
+  ('innamorati12', false)
+ON CONFLICT (code) DO UPDATE SET used = false;
 
--- Verify it was added
-SELECT * FROM invite_codes WHERE LOWER(code) = LOWER('innamorati1');
+-- Verify all codes were added
+SELECT * FROM invite_codes 
+WHERE LOWER(code) IN (
+  LOWER('besideCHAT123'), 
+  LOWER('valentine1'), 
+  LOWER('innamorati12')
+)
+ORDER BY code;
 
