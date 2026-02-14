@@ -74,6 +74,8 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS hobbies text[] DEFAULT '{}';
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS reveal_type_a text DEFAULT 'none' CHECK (reveal_type_a IN ('none', 'whatsapp', 'room', 'both'));
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS reveal_type_b text DEFAULT 'none' CHECK (reveal_type_b IN ('none', 'whatsapp', 'room', 'both'));
 
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS image_url text;
+
 -- ============================================
 -- PART 3: ADD CONSTRAINTS
 -- ============================================
