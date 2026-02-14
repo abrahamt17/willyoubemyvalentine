@@ -132,10 +132,10 @@ After adding environment variables:
 In Supabase SQL Editor, run:
 
 ```sql
-INSERT INTO invite_codes (code) VALUES ('YOUR-CLASS-CODE');
+INSERT INTO invite_codes (code) VALUES ('INNAMORATI');
 ```
 
-Replace `YOUR-CLASS-CODE` with your actual invite code (e.g., `CAMPUS2024`)
+The invite code is **INNAMORATI** - use this exact code!
 
 ---
 

@@ -72,7 +72,7 @@ Vercel should auto-detect Next.js, but verify:
 1. **Test the deployment**: Visit your Vercel URL
 2. **Create invite codes**: In Supabase SQL Editor:
    ```sql
-   INSERT INTO invite_codes (code) VALUES ('YOUR-CLASS-CODE');
+   INSERT INTO invite_codes (code) VALUES ('INNAMORATI');
    ```
 3. **Share the invite code** with your class!
 
