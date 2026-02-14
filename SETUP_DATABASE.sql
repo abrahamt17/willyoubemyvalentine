@@ -100,14 +100,18 @@ CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at);
 -- PART 5: CLEAN UP AND SET UP INVITE CODES
 -- ============================================
 
--- IMPORTANT: Delete users first (they reference invite_codes)
+-- Step 1: Clear the used_by references in invite_codes first
+-- This breaks the foreign key constraint from invite_codes to users
+UPDATE invite_codes SET used_by = NULL, used = false;
+
+-- Step 2: Now we can delete users (they reference invite_codes via invite_code_id)
 -- This will cascade delete messages, matches, and requests
 DELETE FROM users;
 
--- Now we can safely delete all invite codes
+-- Step 3: Now we can safely delete all invite codes
 DELETE FROM invite_codes;
 
--- Insert all invite codes fresh
+-- Step 4: Insert all invite codes fresh
 INSERT INTO invite_codes (code, used) 
 VALUES 
   ('besideCHAT123', false),
