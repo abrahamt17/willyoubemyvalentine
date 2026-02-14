@@ -164,6 +164,17 @@ export default function HomePage() {
           }
         }
       } else {
+        // Account might not exist anymore - remove from recent accounts
+        const stored = localStorage.getItem("recent_accounts");
+        if (stored) {
+          const userIds = JSON.parse(stored);
+          const filtered = userIds.filter((id: string) => id !== userId);
+          if (filtered.length > 0) {
+            localStorage.setItem("recent_accounts", JSON.stringify(filtered));
+          } else {
+            localStorage.removeItem("recent_accounts");
+          }
+        }
         setError(data.error || "Could not log in");
       }
     } catch {
@@ -177,19 +188,50 @@ export default function HomePage() {
     e.preventDefault();
     setError(null);
     
-    // Check if user has recent accounts before creating a new one
+    // Check if user has recent accounts - if so, auto-login to most recent
     const stored = localStorage.getItem("recent_accounts");
     if (stored) {
       const userIds = JSON.parse(stored);
       if (Array.isArray(userIds) && userIds.length > 0) {
-        // User has recent accounts - ask them to use existing account instead
-        setError(t.landing.useExistingAccount || "You have accounts in this browser. Please select one from above or use Quick Login to find your account.");
-        // Reload recent accounts to make sure they're visible
-        loadRecentAccounts();
-        return;
+        // User has recent accounts - automatically log them in to the most recent one
+        setLoading(true);
+        try {
+          // Get the most recent account (first in the array)
+          const mostRecentUserId = userIds[0];
+          
+          // Verify the account still exists and is valid
+          const res = await fetch(`/api/auth/recent-accounts?user_ids=${mostRecentUserId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.accounts && data.accounts.length > 0) {
+              // Account exists - log them in automatically
+              await handleAccountLogin(mostRecentUserId);
+              return;
+            }
+          }
+          
+          // If account doesn't exist, remove it and try next one or create new
+          const validIds = userIds.filter((id: string) => id !== mostRecentUserId);
+          if (validIds.length > 0) {
+            localStorage.setItem("recent_accounts", JSON.stringify(validIds));
+            // Try next account
+            const nextUserId = validIds[0];
+            await handleAccountLogin(nextUserId);
+            return;
+          } else {
+            // No valid accounts, clear localStorage and proceed with new registration
+            localStorage.removeItem("recent_accounts");
+          }
+        } catch (error) {
+          console.error("Error auto-logging in:", error);
+          // If auto-login fails, proceed with new registration
+        } finally {
+          setLoading(false);
+        }
       }
     }
     
+    // No recent accounts - proceed with new registration
     setLoading(true);
     try {
       const res = await fetch("/api/auth/invite", {
