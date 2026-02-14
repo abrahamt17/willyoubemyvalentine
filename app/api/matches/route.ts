@@ -61,10 +61,12 @@ export async function GET() {
           bio: otherUser?.bio || null,
           avatar_url: theirReveal ? otherUser?.avatar_url : null,
           whatsapp_number: (theirReveal && (revealType === "whatsapp" || revealType === "both")) ? (otherUser?.whatsapp_number || null) : null,
-          room_number: (theirReveal && (revealType === "room" || revealType === "both")) ? (otherUser?.room_number || null) : null
+          room_number: (theirReveal && (revealType === "room" || revealType === "both")) ? (otherUser?.room_number || null) : null,
+          hobbies: otherUser?.hobbies || null
         },
         my_reveal: myReveal,
         their_reveal: theirReveal,
+        reveal_type: revealType,
         created_at: match.created_at
       };
     });
