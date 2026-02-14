@@ -45,6 +45,11 @@ export async function POST(request: Request) {
       );
     }
 
+    // IMPORTANT: Don't create a new user if one already exists for this invite code in this browser
+    // Instead, check if there's a user that was created with this invite code
+    // But we can't track this per-browser, so we'll always create a new user
+    // The real fix is: users should use Quick Login if they already registered
+    
     // Create user minimal profile
     const { data: newUser, error: userError } = await supabase
       .from("users")

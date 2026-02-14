@@ -101,8 +101,25 @@ export default function OnboardingPage() {
         return;
       }
 
-      // Success! Redirect to dashboard
+      // Success! Save to recent accounts and redirect to dashboard
       // Use replace to prevent going back to onboarding
+      try {
+        const meRes = await fetch("/api/auth/me");
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          if (meData.userId) {
+            // Save to recent accounts
+            const stored = localStorage.getItem("recent_accounts");
+            let userIds = stored ? JSON.parse(stored) : [];
+            userIds = userIds.filter((id: string) => id !== meData.userId);
+            userIds.unshift(meData.userId);
+            userIds = userIds.slice(0, 5);
+            localStorage.setItem("recent_accounts", JSON.stringify(userIds));
+          }
+        }
+      } catch (e) {
+        // Ignore errors saving recent account
+      }
       router.replace("/dashboard");
     } catch {
       setError(t.common.networkError);

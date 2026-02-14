@@ -19,11 +19,15 @@ export async function GET(request: Request) {
     const supabase = supabaseServer();
 
     // Find users matching the anonymous name and gender
+    // Only return users who have completed onboarding (have anonymous_name, gender, and whatsapp_number)
     const { data: users, error } = await supabase
       .from("users")
-      .select("id, anonymous_name, gender, created_at")
+      .select("id, anonymous_name, gender, avatar_url, display_name, created_at")
       .eq("anonymous_name", anonymousName.trim())
       .eq("gender", gender)
+      .not("anonymous_name", "eq", "") // Must have completed onboarding
+      .not("gender", "is", null)
+      .not("whatsapp_number", "is", null)
       .order("created_at", { ascending: false })
       .limit(10);
 
@@ -61,11 +65,14 @@ export async function POST(request: Request) {
 
     const supabase = supabaseServer();
 
-    // Verify user exists
+    // Verify user exists and has completed onboarding
     const { data: user, error } = await supabase
       .from("users")
-      .select("id, anonymous_name, gender")
+      .select("id, anonymous_name, gender, avatar_url, display_name")
       .eq("id", userId)
+      .not("anonymous_name", "eq", "")
+      .not("gender", "is", null)
+      .not("whatsapp_number", "is", null)
       .single();
 
     if (error || !user) {

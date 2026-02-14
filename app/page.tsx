@@ -39,9 +39,14 @@ export default function HomePage() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [searchingAccounts, setSearchingAccounts] = useState(false);
+  const [recentAccounts, setRecentAccounts] = useState<any[]>([]);
+  const [loadingRecentAccounts, setLoadingRecentAccounts] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    
+    // Load recent accounts from localStorage
+    loadRecentAccounts();
     
     fetch("/api/auth/me")
       .then((res) => {
@@ -61,6 +66,52 @@ export default function HomePage() {
       })
       .catch(() => {});
   }, [router]);
+
+  const loadRecentAccounts = async () => {
+    try {
+      const stored = localStorage.getItem("recent_accounts");
+      if (!stored) {
+        setRecentAccounts([]);
+        return;
+      }
+
+      const userIds = JSON.parse(stored);
+      if (!Array.isArray(userIds) || userIds.length === 0) {
+        setRecentAccounts([]);
+        return;
+      }
+
+      setLoadingRecentAccounts(true);
+      const res = await fetch(`/api/auth/recent-accounts?user_ids=${userIds.join(",")}`);
+      if (res.ok) {
+        const data = await res.json();
+        setRecentAccounts(data.accounts || []);
+      }
+    } catch (error) {
+      console.error("Error loading recent accounts:", error);
+      setRecentAccounts([]);
+    } finally {
+      setLoadingRecentAccounts(false);
+    }
+  };
+
+  const saveRecentAccount = (userId: string) => {
+    try {
+      const stored = localStorage.getItem("recent_accounts");
+      let userIds = stored ? JSON.parse(stored) : [];
+      
+      // Remove if already exists
+      userIds = userIds.filter((id: string) => id !== userId);
+      // Add to beginning
+      userIds.unshift(userId);
+      // Keep only last 5
+      userIds = userIds.slice(0, 5);
+      
+      localStorage.setItem("recent_accounts", JSON.stringify(userIds));
+    } catch (error) {
+      console.error("Error saving recent account:", error);
+    }
+  };
 
   const handleQuickLoginSearch = async () => {
     if (!loginName.trim() || !loginGender) {
@@ -99,6 +150,9 @@ export default function HomePage() {
       const data = await res.json();
       
       if (res.ok) {
+        // Save to recent accounts
+        saveRecentAccount(userId);
+        
         // Check if user has completed onboarding
         const meRes = await fetch("/api/auth/me");
         if (meRes.ok) {
@@ -278,6 +332,75 @@ export default function HomePage() {
             </Badge>
           </div>
         </motion.div>
+
+        {/* Recent Accounts Section */}
+        {recentAccounts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.6 }}
+            className="w-full max-w-md mt-8"
+          >
+            <Card className="border-primary/20 bg-card/50 backdrop-blur-xl shadow-2xl">
+              <CardHeader className="space-y-2">
+                <CardTitle className="text-xl text-center">
+                  {t.landing.recentAccounts || "Your Accounts"}
+                </CardTitle>
+                <CardDescription className="text-center text-sm">
+                  {t.landing.recentAccountsDesc || "Select an account to continue"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {loadingRecentAccounts ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    </div>
+                  ) : (
+                    recentAccounts.map((account) => (
+                      <motion.div
+                        key={account.id}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleAccountLogin(account.id)}
+                          disabled={loginLoading}
+                          className="w-full justify-start h-auto p-3"
+                        >
+                          <div className="flex items-center gap-3 w-full">
+                            {account.avatar_url ? (
+                              <img
+                                src={account.avatar_url}
+                                alt={account.anonymous_name}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-primary/20"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center border-2 border-primary/20">
+                                <User className="w-5 h-5 text-primary" />
+                              </div>
+                            )}
+                            <div className="flex-1 text-left">
+                              <p className="font-medium">
+                                {account.display_name || account.anonymous_name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {account.anonymous_name} • {account.gender}
+                              </p>
+                            </div>
+                            {loginLoading && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
+                          </div>
+                        </Button>
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Quick Login / Register Toggle */}
         <motion.div
